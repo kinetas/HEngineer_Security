@@ -1,0 +1,10 @@
+# .secignore — 프로젝트 보안 스캔 제외 목록
+# 스캔 대상 프로젝트 루트에 이 파일을 .secignore 이름으로 저장한다.
+# .gitignore 문법을 따른다.
+# 주의: global ignore(default.secignore)는 이 파일로 override할 수 없다.
+
+# 예시:
+# docs/              → docs 폴더 전체 제외
+# tests/fixtures/    → 테스트 픽스처 제외
+# *.log              → 로그 파일 제외
+# config/local.js    → 특정 파일 제외

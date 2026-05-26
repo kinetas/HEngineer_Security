@@ -1,0 +1,62 @@
+# Security Extension — Global Ignore Patterns
+# 이 파일에 정의된 경로/패턴은 Security AI와 Security Audit AI가 절대 접근하지 않는다.
+# .gitignore 문법을 따른다: glob 패턴, # 주석, ! 제외 불가 (전역 ignore는 override 불가)
+
+# ─── 환경 변수 및 비밀 설정 ───
+.env
+.env.*
+*.env
+.envrc
+secrets.*
+secret.*
+credentials.*
+credentials/
+
+# ─── 인증서 및 키 파일 ───
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt
+*.jks
+*.keystore
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.ppk
+
+# ─── 클라우드 및 서비스 자격증명 ───
+.aws/
+.gcloud/
+.azure/
+gcp-*.json
+firebase-adminsdk*.json
+service-account*.json
+*-serviceaccount.json
+kubeconfig
+.kube/
+
+# ─── 패키지 및 빌드 산출물 ───
+node_modules/
+vendor/
+.venv/
+venv/
+__pycache__/
+*.pyc
+dist/
+build/
+.next/
+.nuxt/
+
+# ─── 버전 관리 내부 ───
+.git/
+.svn/
+
+# ─── 백업 및 임시 파일 ───
+*.bak
+*.backup
+*.tmp
+*.swp
+*~

@@ -1,0 +1,28 @@
+{
+  "name": "security",
+  "version": "1.0.0",
+  "commands": ["/scan", "/audit", "/cve", "/policy"],
+  "mainAI": "Security AI",
+  "subAI": ["Security Audit AI"],
+  "requires": {
+    "server": true,
+    "db": "postgresql"
+  },
+  "specPath": "./info.txt",
+  "install": {
+    "harness": {
+      "copySpec": "doc/security_info.txt",
+      "createDirs": [
+        "report/sec_fragments"
+      ]
+    },
+    "standalone": {
+      "copySpec": "doc/security_info.txt",
+      "createDirs": [
+        "doc",
+        "report",
+        "report/sec_fragments"
+      ]
+    }
+  }
+}

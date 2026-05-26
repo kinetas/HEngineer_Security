@@ -1,0 +1,20 @@
+{
+  "risk_thresholds": {
+    "critical": 9.0,
+    "high": 7.0,
+    "medium": 4.0,
+    "low": 0.0
+  },
+  "kisa": {
+    "fail_on_required": true,
+    "fail_on_recommended_count": 5
+  },
+  "tools": {
+    "semgrep_rules": "p/security-audit",
+    "trivy_severity": ["CRITICAL", "HIGH", "MEDIUM"]
+  },
+  "api": {
+    "base_url_env": "API_BASE_URL",
+    "timeout_seconds": 30
+  }
+}

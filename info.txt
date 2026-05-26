@@ -1,0 +1,177 @@
+[Security Extension Specification]
+
+1. 확장 기능 개요
+이 확장 기능은 KISA 보안 체크리스트 기반 보안 감사를 수행한다.
+Security AI가 코드를 분석하여 필요한 체크리스트 항목을 동적으로 결정하고,
+복수의 Security Audit AI에게 항목을 분배하여 병렬 검사를 수행한다.
+검사 항목은 미니PC API에서 실시간으로 가져오며, 유저가 직접 선택하거나
+Security AI의 추천을 받아 확정한다.
+
+--------------------------------------------------
+
+2. 명령어 (Commands)
+
+/scan [target] [mode]   : 보안 취약점 스캔
+                          mode: pick | recommend | full (생략 시 recommend)
+/audit [target] [mode]  : KISA 체크리스트 심층 감사 (스캔 + 항목별 상세 점검)
+/report [format]        : 결과 보고서 출력 (format: summary | full | kisa)
+/cve [id]               : CVE 상세 조회
+/policy [action]        : 보안 정책 조회/변경 (action: show | set | reset)
+
+--------------------------------------------------
+
+3. AI 역할 정의
+
+--- Main AI ---
+
+Security AI
+- ROLE: 검사 코디네이터. 코드 분석, 체크리스트 항목 결정, Audit AI 동적 배정, 결과 종합.
+- 책임:
+    · 유저 명령 수신 및 검사 흐름 총괄
+    · 미니PC API에서 KISA 체크리스트 전체 항목 로드
+    · mode에 따른 검사 항목 결정:
+        - pick     : 유저에게 항목 목록 제시, 선택 받기
+        - recommend: 대상 코드를 직접 읽고 적합한 항목 추천 → 유저 승인 후 확정
+        - full     : 전체 항목 선택
+    · 확정된 항목을 균등 분할하여 Security Audit AI N개에게 배정
+    · 각 Audit AI의 결과를 수집하여 위험 등급 판정 (CRITICAL/HIGH/MEDIUM/LOW)
+    · 종합 보고서 작성 및 유저에게 최종 보고
+- 권한:
+    · HR AI에게 Security Audit AI spawn 요청 가능 (항목 수에 따라 N개 결정)
+    · 미니PC GET API 직접 호출 가능 (/kisa/checklist, /cve/{id})
+    · 대상 코드 파일 직접 읽기 가능 (recommend 모드)
+- 항목 분배 기준:
+    · 항목 5개 이하   → Audit AI 1개
+    · 항목 6~15개    → Audit AI 2개
+    · 항목 16개 이상  → Audit AI 3개 (teamLimit 고려)
+
+--- Sub AI ---
+
+Security Audit AI
+- ROLE: 배정된 KISA 체크리스트 항목을 검사하는 범용 실행자.
+        도메인이 고정되지 않으며, 항목에 따라 적합한 도구를 선택하여 실행.
+- 책임:
+    · Security AI로부터 받은 KISA 항목 목록 확인
+    · 항목별로 적합한 도구 선택 및 실행:
+        입력/주입 관련  → semgrep (p/security-audit), bandit
+        인증/인가 관련  → semgrep (p/auth), 코드 패턴 분석
+        암호화 관련    → semgrep (p/secrets), bandit
+        의존성 관련    → trivy, npm audit, pip audit
+        설정/헤더 관련  → semgrep (p/owasp), 코드 패턴 분석
+    · 스캔 결과를 미니PC POST API로 전송 (/scan/result)
+    · fragment 보고서 작성 (담당 항목 + 결과 포함)
+    · Security AI에게 완료 보고
+- 권한:
+    · 로컬 도구 실행 가능 (semgrep, bandit, trivy, npm audit, pip audit)
+    · 미니PC 전체 API 호출 가능
+
+--------------------------------------------------
+
+4. 검사 흐름
+
+[recommend 모드 (기본)]
+유저: /scan ./src
+  → Security AI: 대상 코드 분석
+  → Security AI: GET /kisa/checklist (전체 항목 로드)
+  → Security AI: 코드 특성에 맞는 항목 추천 + 근거 제시
+  → 유저: 추천 항목 승인 / 일부 수정
+  → Security AI: 확정된 항목을 N등분 → HR AI에게 Audit AI N개 spawn 요청
+  → Security Audit AI (병렬): 각 담당 항목 검사 → POST /scan/result → fragment 작성
+  → Security AI: 전체 결과 수집 → 위험 판정 → 종합 보고서
+
+[pick 모드]
+  → Security AI: GET /kisa/checklist → 유저에게 전체 항목 목록 제시
+  → 유저: 원하는 항목 선택
+  → (이후 동일)
+
+[full 모드]
+  → Security AI: GET /kisa/checklist → 전체 항목 그대로 사용
+  → (이후 동일)
+
+--------------------------------------------------
+
+5. 도구 레이어 (Security Audit AI가 KISA 항목에 따라 선택 실행)
+
+정적 분석:
+  semgrep         : 다언어 정적 분석 (룰셋은 항목에 따라 선택)
+  bandit          : Python 코드 보안 취약점 분석
+
+의존성 스캔:
+  trivy           : 컨테이너/파일시스템 취약점 스캔
+  npm audit       : Node.js 의존성 취약점 검사
+  pip audit       : Python 패키지 취약점 검사
+
+--------------------------------------------------
+
+6. 미니PC API 연동
+
+엔드포인트:
+  POST /scan/result     : 스캔 결과 저장 (Security Audit AI → 미니PC)
+  GET  /cve/{id}        : CVE 상세 조회
+  GET  /kisa/checklist  : KISA 체크리스트 전체 항목 조회 (Security AI가 호출)
+
+설정:
+  API_BASE_URL 환경변수로 미니PC 주소 지정 (예: http://192.168.x.x:8000)
+  미설정 시: KISA 항목은 내장 기본 목록 사용, CVE는 NVD 공식 API 호출
+
+--------------------------------------------------
+
+7. 폴더 구조 (설치 후)
+
+[하네스 루트]
+  doc/
+    security_info.txt         : 본 명세서 (설치 시 info.txt에서 복사됨)
+  report/
+    sec_fragments/            : 각 Security Audit AI의 검사 결과 파트별 보고서 (설치 시 생성)
+                                파일명 형식: TASK-XXX_audit-ai-N.txt
+    sec_report.md             : Security AI가 모든 fragment를 종합한 최종 보안 보고서
+                                (/audit 또는 /scan 실행 완료 시 자동 생성)
+  add/installed/security/
+    extension.json            : 확장 기능 매니페스트
+    info.txt                  : 원본 명세서
+    policy/
+      default.json            : 기본 보안 정책 (위험 등급 임계값 등)
+      default.secignore       : 전역 접근 제한 패턴
+      secignore.template      : 프로젝트용 .secignore 템플릿
+
+--------------------------------------------------
+
+8. 위험 등급 기준
+
+CRITICAL  : CVSS 9.0+ 또는 KISA 필수 항목 미준수
+HIGH      : CVSS 7.0~8.9 또는 KISA 권고 항목 다수 미준수
+MEDIUM    : CVSS 4.0~6.9 또는 코드 취약 패턴 감지
+LOW       : CVSS 4.0 미만 또는 잠재적 개선 사항
+
+--------------------------------------------------
+
+9. 접근 제한 (Ignore 규칙)
+
+Security AI와 Security Audit AI는 어떤 상황에서도 아래 우선순위로 ignore 패턴을 적용하며,
+매칭되는 파일/폴더에는 절대 접근(읽기, 실행, API 전송)하지 않는다.
+
+적용 우선순위:
+  1. policy/default.secignore  → 전역 기본값. override 불가.
+  2. [스캔 대상 루트]/.secignore → 프로젝트별 추가 제외 목록.
+
+규칙:
+  - .gitignore 문법(glob 패턴)을 따른다.
+  - 스캔 시작 전 두 파일을 모두 로드하여 합산 패턴을 구성한다.
+  - 패턴에 매칭되는 경로는 도구 실행 대상에서 제외하고, 파일 내용을 읽지 않는다.
+  - 매칭 여부를 판단하기 위한 경로 탐색(파일명 확인)은 허용하나, 파일 내용 접근은 불가.
+  - 유저가 ignore된 경로를 명시적으로 스캔하도록 요청해도 거부하고 이유를 보고한다.
+
+프로젝트 .secignore 생성:
+  policy/secignore.template 파일을 스캔 대상 루트에 .secignore로 복사하여 사용.
+
+--------------------------------------------------
+
+10. 운영 규칙
+
+- [항목 우선 결정] Security AI는 반드시 검사 항목을 확정한 후 Audit AI를 spawn한다.
+- [동적 배정] Audit AI의 역할은 고정되지 않으며, Security AI가 매 검사마다 항목을 나눠 배정한다.
+- [병렬 실행] 배정된 Audit AI들은 동시에 검사를 진행한다.
+- [API 전송] 각 Audit AI는 담당 항목 검사 완료 후 반드시 POST /scan/result 전송 후 fragment 작성.
+- [결과 수집] Security AI는 모든 Audit AI의 fragment를 수집한 후 종합 보고서를 작성한다.
+- [teamLimit 준수] Audit AI spawn 수는 항목 분배 기준을 따르되 teamLimit을 초과할 수 없다.
+- [추천 근거 제시] recommend 모드에서 Security AI는 추천 항목마다 근거(코드 특성)를 함께 제시한다.
