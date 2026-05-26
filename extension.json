@@ -12,12 +12,18 @@
   "install": {
     "harness": {
       "copySpec": "doc/security_info.txt",
+      "copyFiles": [
+        { "from": "policy/secignore.template", "to": "doc/.secignore" }
+      ],
       "createDirs": [
         "report/sec_fragments"
       ]
     },
     "standalone": {
       "copySpec": "doc/security_info.txt",
+      "copyFiles": [
+        { "from": "policy/secignore.template", "to": "doc/.secignore" }
+      ],
       "createDirs": [
         "doc",
         "report",

@@ -1,10 +1,120 @@
 # .secignore — 프로젝트 보안 스캔 제외 목록
-# 스캔 대상 프로젝트 루트에 이 파일을 .secignore 이름으로 저장한다.
-# .gitignore 문법을 따른다.
-# 주의: global ignore(default.secignore)는 이 파일로 override할 수 없다.
+# 스캔에서 제외할 파일/폴더를 지정한다. .gitignore 문법을 따른다.
+# 주의: add/installed/security/policy/default.secignore의 항목은 여기서 해제할 수 없다.
+# 필요 없는 항목은 주석 처리(#)하거나 삭제하면 스캔 대상에 포함된다.
 
-# 예시:
-# docs/              → docs 폴더 전체 제외
-# tests/fixtures/    → 테스트 픽스처 제외
-# *.log              → 로그 파일 제외
-# config/local.js    → 특정 파일 제외
+# ─── 환경 변수 및 비밀 설정 ───────────────────────────────────────────────────
+.env
+.env.*
+*.env
+.envrc
+.env.local
+.env.development
+.env.production
+.env.test
+
+# ─── 설정 파일 ────────────────────────────────────────────────────────────────
+config/
+configs/
+configuration/
+*.properties
+*.conf
+*.config
+*.cfg
+*.ini
+*.toml
+application.yml
+application.yaml
+application-*.yml
+application-*.yaml
+bootstrap.yml
+bootstrap.yaml
+settings.py
+local_settings.py
+settings_local.py
+
+# ─── 데이터베이스 ─────────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+*.mdb
+*.accdb
+dump.sql
+*.dump
+db/seeds/
+db/data/
+database/seeds/
+database/data/
+
+# ─── 로그 ────────────────────────────────────────────────────────────────────
+*.log
+*.log.*
+logs/
+log/
+
+# ─── Docker / 인프라 ──────────────────────────────────────────────────────────
+docker-compose.override.yml
+docker-compose.override.yaml
+docker-compose.local.yml
+docker-compose.prod.yml
+*.override.yml
+*.override.yaml
+terraform.tfvars
+*.tfvars
+*.tfstate
+*.tfstate.*
+ansible/vault/
+helm/values-*.yaml
+
+# ─── 인증서 및 키 (default.secignore와 중복이나 명시적 유지) ──────────────────
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+
+# ─── 테스트 픽스처 / 목 데이터 ────────────────────────────────────────────────
+# 실제 민감 데이터가 포함된 경우 제외, 아니면 주석 처리
+tests/fixtures/
+test/fixtures/
+__fixtures__/
+mocks/data/
+
+# ─── 빌드 산출물 ──────────────────────────────────────────────────────────────
+dist/
+build/
+out/
+target/
+*.min.js
+*.min.css
+*.bundle.js
+
+# ─── 패키지 및 의존성 ─────────────────────────────────────────────────────────
+node_modules/
+vendor/
+.venv/
+venv/
+env/
+.tox/
+__pycache__/
+*.pyc
+*.pyo
+
+# ─── IDE / 에디터 ────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.suo
+*.user
+.project
+.classpath
+*.iml
+
+# ─── OS 파일 ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── 마이그레이션 (스키마 노출 우려 시) ──────────────────────────────────────
+# 필요하면 주석 해제
+# migrations/
+# db/migrate/

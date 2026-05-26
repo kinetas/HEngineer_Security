@@ -121,6 +121,7 @@ Security Audit AI
 [하네스 루트]
   doc/
     security_info.txt         : 본 명세서 (설치 시 info.txt에서 복사됨)
+    .secignore                : 프로젝트 접근 제한 패턴 (설치 시 템플릿에서 복사, 유저가 편집)
   report/
     sec_fragments/            : 각 Security Audit AI의 검사 결과 파트별 보고서 (설치 시 생성)
                                 파일명 형식: TASK-XXX_audit-ai-N.txt
