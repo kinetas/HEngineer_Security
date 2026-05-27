@@ -13,21 +13,27 @@
     "harness": {
       "copySpec": "doc/security_info.txt",
       "copyFiles": [
-        { "from": "policy/secignore.template", "to": "doc/.secignore" }
+        { "from": "policy/secignore.template", "to": "doc/.secignore" },
+        { "from": "config/.env.template", "to": "config/.env" },
+        { "from": "config/.gitignore", "to": "config/.gitignore" }
       ],
       "createDirs": [
-        "report/sec_fragments"
+        "report/sec_fragments",
+        "config"
       ]
     },
     "standalone": {
       "copySpec": "doc/security_info.txt",
       "copyFiles": [
-        { "from": "policy/secignore.template", "to": "doc/.secignore" }
+        { "from": "policy/secignore.template", "to": "doc/.secignore" },
+        { "from": "config/.env.template", "to": "config/.env" },
+        { "from": "config/.gitignore", "to": "config/.gitignore" }
       ],
       "createDirs": [
         "doc",
         "report",
-        "report/sec_fragments"
+        "report/sec_fragments",
+        "config"
       ]
     }
   }
